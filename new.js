@@ -2,7 +2,8 @@
 // @name            新国开秒刷视频、链接
 // @namespace       https://ink-kai.github.io/
 // @license         MIT
-// @version         1.6
+// @version         1.6.1
+// @description     1.6.1   解决上锁视频自动刷异常
 // @description     1.6     1.加锁视频自动刷（思政课、形式与政策等）
 // @description             2.界面提示“刷完了”后，1.5秒自动刷新页面，方便查看进度（只有第一次刷课程的才有自动刷新）
 // @description             3.关闭自动发帖
@@ -169,33 +170,6 @@
                                                             is_student: true,
                                                             ts: new Date().getTime(),
                                                         };
-                                                        if (
-                                                            media.videos !== null &&
-                                                            media.videos.length == 1
-                                                        ) {
-                                                            duration = media.videos[0]?.duration;
-                                                            let NoLockVideoBody = Object.assign(
-                                                                {},
-                                                                fetchHeader
-                                                            );
-                                                            NoLockVideoBody.body = JSON.stringify({
-                                                                start: 0,
-                                                                end: Math.floor(duration) * 0.99,
-                                                                duraction: duration,
-                                                            });
-                                                            Promise.all([
-                                                                UserVisits(fetchHeader, tmpbody),
-                                                                OnlineVideo(
-                                                                    fetchHeader,
-                                                                    online_video
-                                                                ),
-                                                                ActivitiesRead(
-                                                                    item.id,
-                                                                    NoLockVideoBody
-                                                                ),
-                                                            ]);
-                                                        } else {
-                                                            /* 有锁视频处理 */
                                                             let endTime = media.videos[0].duration;
                                                             let lockVideoBody = Object.assign(
                                                                 {},
@@ -216,7 +190,7 @@
                                                                     lockVideoBody
                                                                 ),
                                                             ]);
-                                                        }
+                                                        
                                                     } else if (media.type == 'audio') {
                                                         // 待开发
                                                     }
