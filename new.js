@@ -133,6 +133,7 @@
 
                                             if (uploads.length > 0) {
                                                 uploads.forEach((media, i) => {
+                                                    duration = media.videos[0].duration;
                                                     if (media.type == 'video') {
                                                         var tmpbody = {
                                                             user_id: globalData.user.id,
@@ -159,38 +160,64 @@
                                                             tmpbody
                                                         );
                                                         online_video = {
-                                                            meeting_type: 'online_video',
+                                                            user_id: globalData.user.id,
+                                                            org_id: globalData.course.orgId,
+                                                            course_id: globalData.course.id,
                                                             module_id: item.module_id,
                                                             syllabus_id: item.syllabus_id,
+                                                            activity_id: item.id,
                                                             upload_id: item.uploads[0].id,
                                                             reply_id: null,
                                                             comment_id: null,
-                                                            forum_type: '',
-                                                            action_type: 'view',
+                                                            forum_type: "",
+                                                            action_type: "view",
+                                                            is_teacher: false,
                                                             is_student: true,
                                                             ts: new Date().getTime(),
+                                                            user_agent: window.navigator.userAgent,
+                                                            meeting_type: "online_video",
+                                                            master_course_id: globalData.course.id,
+                                                            org_name: globalData.user.orgName,
+                                                            org_code: globalData.user.orgCode,
+                                                            user_no: globalData.user.userNo,
+                                                            user_name: globalData.user.name,
+                                                            course_code:
+                                                                globalData.course.courseCode,
+                                                            course_name: globalData.course.name,
+                                                            dep_id: globalData.dept.id,
+                                                            dep_name: globalData.dept.name,
+                                                            dep_code: globalData.dept.code,
                                                         };
-                                                            let endTime = media.videos[0].duration;
-                                                            let lockVideoBody = Object.assign(
-                                                                {},
-                                                                fetchHeader
-                                                            );
-                                                            lockVideoBody.body = JSON.stringify({
-                                                                start: 1,
-                                                                end: endTime,
-                                                            });
-                                                            Promise.all([
-                                                                UserVisits(fetchHeader, tmpbody),
-                                                                OnlineVideo(
-                                                                    fetchHeader,
-                                                                    online_video
-                                                                ),
-                                                                ActivitiesRead(
-                                                                    item.id,
-                                                                    lockVideoBody
-                                                                ),
-                                                            ]);
-                                                        
+                                                        debugger;
+                                                        var online2_video = Object.assign({}, online_video)
+                                                        online2_video.action_type = 'play';
+                                                        online2_video["start_at"] = 0;
+                                                        online2_video["end_at"] = duration;
+                                                        online2_video["duration"] = duration;
+                                                        let lockVideoBody = Object.assign(
+                                                            {},
+                                                            fetchHeader
+                                                        );
+                                                        lockVideoBody.body = JSON.stringify({
+                                                            start: 1,
+                                                            end: duration,
+                                                        });
+                                                        Promise.all([
+                                                            ActivitiesRead(
+                                                                item.id,
+                                                                lockVideoBody
+                                                            ),
+                                                            OnlineVideo(
+                                                                fetchHeader,
+                                                                online_video
+                                                            ),
+                                                            OnlineVideo(
+                                                                fetchHeader,
+                                                                online2_video
+                                                            ),
+                                                            UserVisits(fetchHeader, tmpbody),
+                                                        ]);
+
                                                     } else if (media.type == 'audio') {
                                                         // 待开发
                                                     }
