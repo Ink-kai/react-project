@@ -2,7 +2,8 @@
 // @name            新国开秒刷视频、链接
 // @namespace       https://ink-kai.github.io/
 // @license         MIT
-// @version         1.6.1
+// @version         1.6.3   修复学习行为音频未增加的bug
+// @description     1.6.2   修复学习行为未增加的bug
 // @description     1.6.1   解决上锁视频自动刷异常
 // @description     1.6     1.加锁视频自动刷（思政课、形式与政策等）
 // @description             2.界面提示“刷完了”后，1.5秒自动刷新页面，方便查看进度（只有第一次刷课程的才有自动刷新）
@@ -131,73 +132,72 @@
                                             var uploads = item.uploads;
                                             var duration;
 
+                                            var tmpbody = {
+                                                user_id: globalData.user.id,
+                                                org_id: globalData.course.orgId,
+                                                course_id: globalData.course.id,
+                                                visit_duration: duration,
+                                                is_teacher: false,
+                                                browser: GetBrower(),
+                                                user_agent: window.navigator.userAgent,
+                                                master_course_id: globalData.course.id,
+                                                org_name: globalData.user.orgName,
+                                                org_code: globalData.user.orgCode,
+                                                user_no: globalData.user.userNo,
+                                                user_name: globalData.user.name,
+                                                course_code:
+                                                    globalData.course.courseCode,
+                                                course_name: globalData.course.name,
+                                                dep_id: globalData.dept.id,
+                                                dep_name: globalData.dept.name,
+                                                dep_code: globalData.dept.code,
+                                            };
+                                            let lockVideoBody = Object.assign(
+                                                {},
+                                                fetchHeader
+                                            );
+                                            var online_video = Object.assign(
+                                                {},
+                                                tmpbody
+                                            );
+                                            online_video = {
+                                                user_id: globalData.user.id,
+                                                org_id: globalData.course.orgId,
+                                                course_id: globalData.course.id,
+                                                module_id: item.module_id,
+                                                syllabus_id: item.syllabus_id,
+                                                activity_id: item.id,
+                                                upload_id: item.uploads[0].id,
+                                                reply_id: null,
+                                                comment_id: null,
+                                                forum_type: "",
+                                                action_type: "view",
+                                                is_teacher: false,
+                                                is_student: true,
+                                                ts: new Date().getTime(),
+                                                user_agent: window.navigator.userAgent,
+                                                meeting_type: "online_video",
+                                                master_course_id: globalData.course.id,
+                                                org_name: globalData.user.orgName,
+                                                org_code: globalData.user.orgCode,
+                                                user_no: globalData.user.userNo,
+                                                user_name: globalData.user.name,
+                                                course_code:
+                                                    globalData.course.courseCode,
+                                                course_name: globalData.course.name,
+                                                dep_id: globalData.dept.id,
+                                                dep_name: globalData.dept.name,
+                                                dep_code: globalData.dept.code,
+                                            };
+                                            var online2_video = Object.assign({}, online_video)
+                                            online2_video.action_type = 'play';
+                                            online2_video["start_at"] = 0;
                                             if (uploads.length > 0) {
                                                 uploads.forEach((media, i) => {
-                                                    duration = media.videos[0].duration;
                                                     if (media.type == 'video') {
-                                                        var tmpbody = {
-                                                            user_id: globalData.user.id,
-                                                            org_id: globalData.course.orgId,
-                                                            course_id: globalData.course.id,
-                                                            visit_duration: duration,
-                                                            is_teacher: false,
-                                                            browser: GetBrower(),
-                                                            user_agent: window.navigator.userAgent,
-                                                            master_course_id: globalData.course.id,
-                                                            org_name: globalData.user.orgName,
-                                                            org_code: globalData.user.orgCode,
-                                                            user_no: globalData.user.userNo,
-                                                            user_name: globalData.user.name,
-                                                            course_code:
-                                                                globalData.course.courseCode,
-                                                            course_name: globalData.course.name,
-                                                            dep_id: globalData.dept.id,
-                                                            dep_name: globalData.dept.name,
-                                                            dep_code: globalData.dept.code,
-                                                        };
-                                                        var online_video = Object.assign(
-                                                            {},
-                                                            tmpbody
-                                                        );
-                                                        online_video = {
-                                                            user_id: globalData.user.id,
-                                                            org_id: globalData.course.orgId,
-                                                            course_id: globalData.course.id,
-                                                            module_id: item.module_id,
-                                                            syllabus_id: item.syllabus_id,
-                                                            activity_id: item.id,
-                                                            upload_id: item.uploads[0].id,
-                                                            reply_id: null,
-                                                            comment_id: null,
-                                                            forum_type: "",
-                                                            action_type: "view",
-                                                            is_teacher: false,
-                                                            is_student: true,
-                                                            ts: new Date().getTime(),
-                                                            user_agent: window.navigator.userAgent,
-                                                            meeting_type: "online_video",
-                                                            master_course_id: globalData.course.id,
-                                                            org_name: globalData.user.orgName,
-                                                            org_code: globalData.user.orgCode,
-                                                            user_no: globalData.user.userNo,
-                                                            user_name: globalData.user.name,
-                                                            course_code:
-                                                                globalData.course.courseCode,
-                                                            course_name: globalData.course.name,
-                                                            dep_id: globalData.dept.id,
-                                                            dep_name: globalData.dept.name,
-                                                            dep_code: globalData.dept.code,
-                                                        };
-                                                        debugger;
-                                                        var online2_video = Object.assign({}, online_video)
-                                                        online2_video.action_type = 'play';
-                                                        online2_video["start_at"] = 0;
+                                                        duration = media.videos[0]?.duration ? parseInt(media.videos[0]?.duration) : null;
                                                         online2_video["end_at"] = duration;
                                                         online2_video["duration"] = duration;
-                                                        let lockVideoBody = Object.assign(
-                                                            {},
-                                                            fetchHeader
-                                                        );
                                                         lockVideoBody.body = JSON.stringify({
                                                             start: 1,
                                                             end: duration,
@@ -207,6 +207,7 @@
                                                                 item.id,
                                                                 lockVideoBody
                                                             ),
+                                                            /* 增加音视频查看次数 */
                                                             OnlineVideo(
                                                                 fetchHeader,
                                                                 online_video
@@ -215,11 +216,35 @@
                                                                 fetchHeader,
                                                                 online2_video
                                                             ),
+                                                            /* 增加课程访问次数 */
                                                             UserVisits(fetchHeader, tmpbody),
                                                         ]);
 
                                                     } else if (media.type == 'audio') {
                                                         // 待开发
+                                                        duration = media.audio?.duration ? parseInt(media.audio?.duration) : null;
+                                                        online2_video["end_at"] = duration;
+                                                        online2_video["duration"] = duration;
+                                                        online2_video["meeting_type"] = "online_video";
+                                                        lockVideoBody.body = JSON.stringify({
+                                                            start: 1,
+                                                            end: duration,
+                                                            duration: duration,
+                                                        });
+                                                        debugger;
+                                                        Promise.all([
+                                                            ActivitiesRead(
+                                                                item.id,
+                                                                lockVideoBody
+                                                            ),
+                                                            /* 增加音视频查看次数 */
+                                                            OnlineVideo(
+                                                                fetchHeader,
+                                                                online_video
+                                                            ),
+                                                            /* 增加课程访问次数 */
+                                                            UserVisits(fetchHeader, tmpbody),
+                                                        ]);
                                                     }
                                                 });
                                             } else {
@@ -486,7 +511,6 @@
             header
         ).then(res => res.json());
     }
-
     /* 在线视频 */
     function OnlineVideo(header, body) {
         header.method = 'POST';
