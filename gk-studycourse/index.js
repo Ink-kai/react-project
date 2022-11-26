@@ -4,6 +4,7 @@ const log = require('electron-log');
 const gotTheLock = app.requestSingleInstanceLock()
 const { autoUpdater } = require("electron-updater");
 
+
 log.transports.file.resolvePathFn = () => path.join(__dirname, 'logs/main.log');
 autoUpdater.logger = log;
 autoUpdater.logger.transports.file.level = 'info';
