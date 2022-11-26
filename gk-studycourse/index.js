@@ -1,7 +1,31 @@
-const { app, BrowserWindow } = require('electron')
+const { app, BrowserWindow, dialog,autoUpdater } = require('electron')
 const path = require("path")
+const log = require('electron-log');
 const gotTheLock = app.requestSingleInstanceLock()
-require('update-electron-app')()
+log.transports.file.resolvePathFn = () => path.join(__dirname, 'logs/main.log');
+
+const server = '服务器地址'
+const url = `${server}/update/${process.platform}/ ${app.getVersion()}`
+
+autoUpdater.setFeedURL({ url })
+setInterval(() => {
+    autoUpdater.checkForUpdates()
+}, 3600000)
+
+autoUpdater.on('update-downloaded', (event, releaseNotes, releaseName) => {
+    const dialogOpts = {
+      type: 'info',
+      buttons: ['重启', '稍后'],
+      title: '应用更新',
+      message: process.platform === 'win32' ? releaseNotes : releaseName,
+      detail: '应用已经更新了，请重启'
+    }
+  
+    dialog.showMessageBox(dialogOpts).then((returnValue) =>{
+      if(returnValue.response === 0) autoUpdater.quitAnd()
+    })
+  })
+
 let win
 function createWindow() {
     win = new BrowserWindow({
@@ -27,19 +51,22 @@ function createWindow() {
     win.once('ready-to-show', () => {
         win.show();
     })
+    Menu.setApplicationMenu(null)
+    log.info("关闭默认菜单")
 }
 if (!gotTheLock) {
     app.quit()
 } else {
     app.on('second-instance', (event, commandLine, workingDirectory) => {
-        // 用户正在尝试运行第二个实例，我们需要让焦点指向我们的窗口
         if (mainWindow) {
             if (mainWindow.isMinimized()) mainWindow.restore()
             mainWindow.focus()
         }
     })
     app.on("web-contents-created", (event, w) => {
+        w.send("event", 111111111111)
         w.setWindowOpenHandler((details) => {
+            log.info(`正在前往 ${details.url}`)
             win.loadURL(details.url, { userAgent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/107.0.0.0 Safari/537.36" })
             return { "action": "deny" }
         })
@@ -47,10 +74,6 @@ if (!gotTheLock) {
 
     app.whenReady().then(() => {
         createWindow()
-        // win.webContents.on('did-finish-load', () => {
-        //     win.webContents.send("load", { "win": win.webContents });
-
-        // })
         app.on('activate', function () {
             if (win || BrowserWindow.getAllWindows().length === 0) createWindow()
         })

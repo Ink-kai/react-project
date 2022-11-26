@@ -8,49 +8,60 @@
   "repository": "https://gitee.com/Ink-kai/tampermonkey.git",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start-t": "chcp 65001 && electron  --trace-warnings --inspect=5858 .",
-    "start": "electron-forge start",
-    "package": "electron-forge package",
-    "make": "electron-forge make",
-    "publish": "electron-forge publish",
-    "lint": "eslint src --color"
+    "start": "chcp 65001 && electron  --trace-warnings --inspect=5858 .",
+    "build": "electron-builder ",
+    "release": "electron-builder build --win -p always"
   },
-  "config": {
-    "forge": {
-      "make_targets": {
-        "win32": [
-          "squirrel"
-        ],
-        "darwin": [
-          "zip"
-        ],
-        "linux": [
-          "deb",
-          "rpm"
-        ]
-      },
-      "electronPackagerConfig": {
-        "packageManager": "yarn"
-      },
-      "electronWinstallerConfig": {
-        "name": "my_new_app"
-      },
-      "electronInstallerDebian": {},
-      "electronInstallerRedhat": {},
-      "github_repository": {
-        "owner": "",
-        "name": ""
-      },
-      "windowsStoreConfig": {
-        "packageName": "",
-        "name": "mynewapp"
+  "build": {
+    "appId": "com.ink.gk_studycourse",
+    "productName": "gk_studycourse",
+    "copyright": "2022 @gk-studycourse ink",
+    "directories": {
+      "output": "build"
+    },
+    "extraResources": {
+      "from": "./config/",
+      "to": "config"
+    },
+    "win": {
+      "icon": "./build/icons/earth.ico",
+      "target": [
+        {
+          "target": "nsis"
+        }
+      ]
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowElevation": false,
+      "allowToChangeInstallationDirectory": true,
+      "installerIcon": "./build/icons/earth.ico",
+      "uninstallerIcon": "./build/icons/earth.ico",
+      "installerHeaderIcon": "./build/icons/earth.ico",
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "***",
+      "include": "./build/script/installer.nsh"
+    },
+    "publish": [
+      {
+        "provider": "github",
+        "owner": "ink",
+        "repo": "react-project",
+        "private": "false",
+        "token": "***",
+        "releaseType": "release"
       }
-    }
+    ]
   },
   "devDependencies": {
-    "electron": "^21.3.0"
+    "@electron-forge/cli": "^6.0.3",
+    "@electron-forge/publisher-github": "^6.0.3",
+    "electron": "^21.3.0",
+    "electron-builder": "^23.6.0"
   },
   "dependencies": {
+    "electron-log": "5.0.0-beta.1",
     "update-electron-app": "^2.0.1"
   }
 }

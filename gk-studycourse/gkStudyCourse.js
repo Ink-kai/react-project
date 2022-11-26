@@ -338,6 +338,7 @@ class gkStudyCourse {
                     this.Show("请求课程数据失败。" + this.getContactQQ())
                 }
             }
+            this.Show("刷完了")
         }, 100)
 
     }
