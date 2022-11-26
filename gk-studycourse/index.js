@@ -1,30 +1,13 @@
-const { app, BrowserWindow, dialog,autoUpdater } = require('electron')
+const { app, BrowserWindow, Menu } = require('electron')
 const path = require("path")
 const log = require('electron-log');
 const gotTheLock = app.requestSingleInstanceLock()
+const { autoUpdater } = require("electron-updater");
+
 log.transports.file.resolvePathFn = () => path.join(__dirname, 'logs/main.log');
+autoUpdater.logger = log;
+autoUpdater.logger.transports.file.level = 'info';
 
-const server = '服务器地址'
-const url = `${server}/update/${process.platform}/ ${app.getVersion()}`
-
-autoUpdater.setFeedURL({ url })
-setInterval(() => {
-    autoUpdater.checkForUpdates()
-}, 3600000)
-
-autoUpdater.on('update-downloaded', (event, releaseNotes, releaseName) => {
-    const dialogOpts = {
-      type: 'info',
-      buttons: ['重启', '稍后'],
-      title: '应用更新',
-      message: process.platform === 'win32' ? releaseNotes : releaseName,
-      detail: '应用已经更新了，请重启'
-    }
-  
-    dialog.showMessageBox(dialogOpts).then((returnValue) =>{
-      if(returnValue.response === 0) autoUpdater.quitAnd()
-    })
-  })
 
 let win
 function createWindow() {
@@ -74,6 +57,7 @@ if (!gotTheLock) {
 
     app.whenReady().then(() => {
         createWindow()
+        autoUpdater.checkForUpdatesAndNotify();
         app.on('activate', function () {
             if (win || BrowserWindow.getAllWindows().length === 0) createWindow()
         })
@@ -83,4 +67,36 @@ if (!gotTheLock) {
             app.quit()
         }
     })
+}
+
+autoUpdater.on('checking-for-update', () => {
+    sendStatusToWindow('Checking for update...');
+})
+
+autoUpdater.on('update-available', (info) => {
+    sendStatusToWindow('Update available.');
+})
+
+autoUpdater.on('update-not-available', (info) => {
+    sendStatusToWindow('Update not available.');
+})
+
+autoUpdater.on('error', (err) => {
+    sendStatusToWindow('Error in auto-updater. ' + err);
+})
+
+autoUpdater.on('download-progress', (progressObj) => {
+    let log_message = "Download speed: " + progressObj.bytesPerSecond;
+    log_message = log_message + ' - Downloaded ' + progressObj.percent + '%';
+    log_message = log_message + ' (' + progressObj.transferred + "/" + progressObj.total + ')';
+    sendStatusToWindow(log_message);
+})
+
+autoUpdater.on('update-downloaded', (info) => {
+    sendStatusToWindow('Update downloaded');
+});
+
+
+function sendStatusToWindow(text) {
+    mainWindow.webContents.send('message', text);
 }

@@ -5,7 +5,6 @@
   "version": "2.0.0",
   "description": "基于油猴1.6.3进行electron桌面化开发",
   "main": "index.js",
-  "repository": "https://gitee.com/Ink-kai/tampermonkey.git",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "chcp 65001 && electron  --trace-warnings --inspect=5858 .",
@@ -31,22 +30,10 @@
         }
       ]
     },
-    "nsis": {
-      "oneClick": false,
-      "allowElevation": false,
-      "allowToChangeInstallationDirectory": true,
-      "installerIcon": "./build/icons/earth.ico",
-      "uninstallerIcon": "./build/icons/earth.ico",
-      "installerHeaderIcon": "./build/icons/earth.ico",
-      "createDesktopShortcut": true,
-      "createStartMenuShortcut": true,
-      "shortcutName": "***",
-      "include": "./build/script/installer.nsh"
-    },
     "publish": [
       {
         "provider": "github",
-        "owner": "ink",
+        "owner": "ink-kai",
         "repo": "react-project",
         "private": "false",
         "token": "***",
@@ -62,6 +49,7 @@
   },
   "dependencies": {
     "electron-log": "5.0.0-beta.1",
+    "electron-updater": "^5.3.0",
     "update-electron-app": "^2.0.1"
   }
 }
