@@ -1,0 +1,56 @@
+{
+  "name": "gk-studycourse",
+  "author": "ink",
+  "license": "MIT",
+  "version": "2.0.0",
+  "description": "基于油猴1.6.3进行electron桌面化开发",
+  "main": "index.js",
+  "repository": "https://gitee.com/Ink-kai/tampermonkey.git",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start-t": "chcp 65001 && electron  --trace-warnings --inspect=5858 .",
+    "start": "electron-forge start",
+    "package": "electron-forge package",
+    "make": "electron-forge make",
+    "publish": "electron-forge publish",
+    "lint": "eslint src --color"
+  },
+  "config": {
+    "forge": {
+      "make_targets": {
+        "win32": [
+          "squirrel"
+        ],
+        "darwin": [
+          "zip"
+        ],
+        "linux": [
+          "deb",
+          "rpm"
+        ]
+      },
+      "electronPackagerConfig": {
+        "packageManager": "yarn"
+      },
+      "electronWinstallerConfig": {
+        "name": "my_new_app"
+      },
+      "electronInstallerDebian": {},
+      "electronInstallerRedhat": {},
+      "github_repository": {
+        "owner": "",
+        "name": ""
+      },
+      "windowsStoreConfig": {
+        "packageName": "",
+        "name": "mynewapp"
+      }
+    }
+  },
+  "devDependencies": {
+    "electron": "^21.3.0"
+  },
+  "dependencies": {
+    "update-electron-app": "^2.0.1"
+  }
+}
