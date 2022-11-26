@@ -35,7 +35,7 @@ function createWindow() {
         win.show();
     })
     Menu.setApplicationMenu(null)
-    log.info("关闭默认菜单")
+    // log.info("关闭默认菜单")
 }
 if (!gotTheLock) {
     app.quit()
