@@ -1,9 +1,5 @@
-const myfetch = (url, header, flag) => {
-  return fetch(url, header).then((res) => res.json());
-};
-
 let myCourse = {},
-  flag = false,
+  page_size = 1000000,
   header = {
     headers: {
       accept: "application/json, text/plain, */*",
@@ -26,91 +22,47 @@ let myCourse = {},
   summaryHeader = {};
 summary = {};
 // 试探题库数
-let { pages: pages } = await fetch(
+let { pages: pages } = await myfetch(
   "https://lms.ouchn.cn/api/my-courses?conditions=%7B%22status%22:%5B%22ongoing%22%5D,%22keyword%22:%22%22%7D&fields=id,name,course_code,department(id,name),grade(id,name),klass(id,name),course_type,cover,small_cover,start_date,end_date,is_started,is_closed,academic_year_id,semester_id,credit,compulsory,second_name,display_name,created_user(id,name),org(is_enterprise_or_organization),org_id,public_scope,course_attributes(teaching_class_name,copy_status,tip,data),audit_status,audit_remark,can_withdraw_course,imported_from,allow_clone,is_instructor,is_team_teaching,academic_year(id,name),semester(id,name),instructors(id,name,email,avatar_small_url),is_master,is_child,has_synchronized,master_course(name)&page=1&page_size=1",
   header
-).then((res) => res.json());
+);
 console.log("页数：", pages);
 // 获取所有课程
-myCourse = await fetch(
+myCourse = await myfetch(
   `https://lms.ouchn.cn/api/my-courses?conditions=%7B%22status%22:%5B%22ongoing%22%5D,%22keyword%22:%22%22%7D&fields=id,name,course_code,department(id,name),grade(id,name),klass(id,name),course_type,cover,small_cover,start_date,end_date,is_started,is_closed,academic_year_id,semester_id,credit,compulsory,second_name,display_name,created_user(id,name),org(is_enterprise_or_organization),org_id,public_scope,course_attributes(teaching_class_name,copy_status,tip,data),audit_status,audit_remark,can_withdraw_course,imported_from,allow_clone,is_instructor,is_team_teaching,academic_year(id,name),semester(id,name),instructors(id,name,email,avatar_small_url),is_master,is_child,has_synchronized,master_course(name)&page=1&page_size=${parseInt(
     pages - (pages % 10)
   )}`,
   header
-).then((res) => res.json());
+);
 if (pages % 10 > 0) {
-  let tmp = await fetch(
+  let tmp = await myfetch(
     `https://lms.ouchn.cn/api/my-courses?conditions=%7B%22status%22:%5B%22ongoing%22%5D,%22keyword%22:%22%22%7D&fields=id,name,course_code,department(id,name),grade(id,name),klass(id,name),course_type,cover,small_cover,start_date,end_date,is_started,is_closed,academic_year_id,semester_id,credit,compulsory,second_name,display_name,created_user(id,name),org(is_enterprise_or_organization),org_id,public_scope,course_attributes(teaching_class_name,copy_status,tip,data),audit_status,audit_remark,can_withdraw_course,imported_from,allow_clone,is_instructor,is_team_teaching,academic_year(id,name),semester(id,name),instructors(id,name,email,avatar_small_url),is_master,is_child,has_synchronized,master_course(name)&page=1&page_size=${
       pages % 10
     }`,
     header
-  ).then((res) => res.json());
+  );
   myCourse.courses = myCourse.courses.concat(tmp.courses);
   // myCourse.courses = myCourse.courses.splice(1,2);
 }
 console.log("课程总计：", myCourse.courses.length);
 if (myCourse ?? "" !== "") {
-  myCourse?.courses.map(async (course, i) => {
-    if (i > 50) flag = true;
+  myCourse?.courses.map(async (course) => {
     header["referrer"] = `https://lms.ouchn.cn/course/${course.id}/ng`;
     // 获取课程中所有考试题库 libs：题库信息  total：题库数
-    let { subject_libs: subject_libs } = await fetch(
-      `https://lms.ouchn.cn/api/course/${course.id}/subject-libs?keyword=&lib_type=all&page=1&page_size=1000&parent_id=0&predicate=id&reverse=true`,
+    let { subject_libs: subject_libs } = await myfetch(
+      `https://lms.ouchn.cn/api/course/${course.id}/subject-libs?keyword=&lib_type=all&page=1&page_size=${page_size}&parent_id=0&predicate=id&reverse=true`,
       header
-    ).then((res) => res.json());
-    // 获取课程中所有考试题库 libs：题库信息  total：题库数
-    // let { exams: exams } = await fetch(
-    //   `https://lms.ouchn.cn/api/courses/${course.id}/exam-list?conditions=%7B%22itemsSortBy%22:%7B%22predicate%22:%22created_at%22,%22reverse%22:true%7D%7D&page=1&page_size=1000&reloadPage=false`,
-    //   header
-    // ).then((res) => res.json());
-    if ((subject_libs ?? "" !== "") && subject_libs?.length > 0) {
-      subject_libs.map(async (lib, i) => {
-        // if (exams?.total > 0) {
-        //   exams.map(async (lib, i) => {
-        if (i > 50) flag = true;
+    );
+    if ((subject_libs ?? "" !== "") && subject_libs.length > 0) {
+      subject_libs.map(async (lib) => {
         header["referrer"] = `https://lms.ouchn.cn/course/${lib.id}/ng`;
-        let { subjects: subjects } = await fetch(
+        let { subjects: subjects } = await myfetch(
           `https://lms.ouchn.cn/api/subject-libs/${lib.id}`,
           header
-        ).then((res) => res.json());
-        subjects.map(async (item) => {
-          let answer = "";
-          if (item.options?.length > 0) {
-            answer = generateAnswer(item.options);
-          }
-          summary = {
-            id: item.id,
-            name:
-              delHtmlTag(item.description) === ""
-                ? item.description
-                : delHtmlTag(item.description),
-            answer: answer ?? "" === "" ? delHtmlTag(answer) : "",
-            point: item.point,
-            type: item.type,
-            updated_at: item.last_updated_at,
-            level: item.difficulty_level,
-            course: course.display_name,
-            source: "国开",
-          };
-          summaryHeader = {
-            headers: {
-              "Content-Type": "application/json",
-            },
-            method: "POST",
-            body: JSON.stringify(summary),
-          };
-          // console.log(summary);
-          let res = await fetch(
-            `http://127.0.0.1:6007/v1/subjectSummary`,
-            summaryHeader
-          ).then((res) => res.json());
-          if (res.code === 200) {
-            console.log("题目上传成功了");
-          } else {
-            console.log(res.message);
-          }
-        });
-
+        );
+        if (subjects.correct_answers.length > 0) {
+          console.log(subjects);
+        }
         /*
         论述题/简答题 以下type没有答案
         short_answer
@@ -153,3 +105,13 @@ let subjectEnum = {
   random: "随机题",
   cloze: "完形填空题",
 };
+
+function myfetch(url, header, count) {
+  if (flag === true) {
+    setTimeout(() => {
+      return fetch(url, header).then((res) => res.json());
+    }, parseInt(Math.random() * 10 + 1));
+  } else {
+    return fetch(url, header).then((res) => res.json());
+  }
+}

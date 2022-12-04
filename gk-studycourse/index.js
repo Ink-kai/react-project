@@ -3,7 +3,7 @@ const path = require("path")
 const log = require('electron-log');
 const gotTheLock = app.requestSingleInstanceLock()
 const { autoUpdater } = require("electron-updater");
-
+require("./menu")
 
 log.transports.file.resolvePathFn = () => path.join(__dirname, 'logs/main.log');
 autoUpdater.logger = log;
@@ -35,8 +35,6 @@ function createWindow() {
     win.once('ready-to-show', () => {
         win.show();
     })
-    Menu.setApplicationMenu(null)
-    log.info("关闭默认菜单")
 }
 if (!gotTheLock) {
     app.quit()
