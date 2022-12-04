@@ -18,7 +18,9 @@ let myCourse = {},
     method: "GET",
     mode: "cors",
     credentials: "include",
-  };
+  },
+  summaryHeader = {};
+summary = {};
 // 试探题库数
 let { total: total } = await myfetch(
   "https://lms.ouchn.cn/api/my-courses?conditions=%7B%22status%22:%5B%22ongoing%22%5D,%22keyword%22:%22%22%7D&fields=id,name,course_code,department(id,name),grade(id,name),klass(id,name),course_type,cover,small_cover,start_date,end_date,is_started,is_closed,academic_year_id,semester_id,credit,compulsory,second_name,display_name,created_user(id,name),org(is_enterprise_or_organization),org_id,public_scope,course_attributes(teaching_class_name,copy_status,tip,data),audit_status,audit_remark,can_withdraw_course,imported_from,allow_clone,is_instructor,is_team_teaching,academic_year(id,name),semester(id,name),instructors(id,name,email,avatar_small_url),is_master,is_child,has_synchronized,master_course(name)&page=1&page_size=1",
@@ -38,12 +40,51 @@ if (myCourse ?? "" !== "") {
       header
     );
     if (subject_libs ?? "" !== "") {
+      subject_libs = subject_libs.splice(1, 3);
       subject_libs.map(async (lib) => {
         header["referrer"] = `https://lms.ouchn.cn/course/${lib.id}/ng`;
         let { subjects: subjects } = await myfetch(
           `https://lms.ouchn.cn/api/subject-libs/${lib.id}`,
           header
         );
+        // subjects.map(item=>{
+        //   if(delHtmlTag(item.description)===""){
+        //     console.log(lib.id,item.description,`https://lms.ouchn.cn/api/subject-libs/${lib.id}`);
+        //   }
+        // })
+        subjects.map(async (item) => {
+          let answer = "";
+          if (item.options?.length > 0) {
+            answer = generateAnswer(item.options);
+          }
+          summary = {
+            id: item.id,
+            name: delHtmlTag(item.description)===""?item.description:delHtmlTag(item.description),
+            answer: answer ?? "" === "" ? delHtmlTag(answer) : "",
+            point: item.point,
+            type: item.type,
+            updated_at: item.last_updated_at,
+            level: item.difficulty_level,
+          };
+          summaryHeader = {
+            headers: {
+              "Content-Type": "application/json",
+            },
+            method: "POST",
+            body: JSON.stringify(summary),
+          };
+          // console.log(summary);
+          let res = await fetch(
+            `http://127.0.0.1:6007/v1/subjectSummary`,
+            summaryHeader
+          ).then((res) => res.json());
+          if (res.code === 200) {
+            console.log("题目上传成功了");
+          } else {
+            console.log(res.message);
+          }
+        });
+
         /*
         论述题/简答题 以下type没有答案
         short_answer
@@ -62,6 +103,17 @@ if (myCourse ?? "" !== "") {
       });
     }
   });
+}
+
+function delHtmlTag(str) {
+  return str.replace(/<[^>]+>/g, "").replace(/s/g, ""); //去掉所有的html标记
+}
+function generateAnswer(arr) {
+  let tmp = "";
+  arr.map((item) => {
+    item.is_answer === true ? (tmp += item.content) : "";
+  });
+  return tmp;
 }
 let subjectEnum = {
   single_selection: "单选题",
