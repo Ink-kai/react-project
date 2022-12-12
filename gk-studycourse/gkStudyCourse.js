@@ -1,10 +1,11 @@
 'use strict'
 class gkStudyCourse {
-    constructor(JQuery, Swal, ...args) {
+    constructor(axios,JQuery, Swal, ...args) {
         if (!gkStudyCourse.instance) {
             gkStudyCourse.instance = this
         }
         this.globalData = args[0]?.globalData || []
+        this.axios=axios
         this.$ = JQuery
         this.Swal = Swal
         this.location = window.location
@@ -342,6 +343,7 @@ class gkStudyCourse {
         }, 100)
 
     }
+    // 粘贴复制
     ResolvePaste() {
         let flag;
         let Inter = setInterval(() => {
@@ -362,6 +364,14 @@ class gkStudyCourse {
         }
         this.Show(`文本框可复制粘贴`, 'success');
     }
+    // 自动答题
+    Automaicanswer(){
+        var question_content=this.$("ol.subjects-jit-display>li:not(:first)")
+        this.$.each(question_content,function(i,item) {
+            this.$(item).find(".pre-wrap.subject-description.simditor-viewer.mathjax-process")
+        })
+    }
+
     async getAllCourse() {
         let header = Object.assign({}, this.header);
         delete header.headers['x-requested-with'];
