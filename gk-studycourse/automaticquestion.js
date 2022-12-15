@@ -9,11 +9,31 @@ $.each(question_content, async function (i, item) {
   var type = item.classList[item.classList.length - 1];
   type = type.split("_")[0];
   type = type === "true" ? "true_or_false" : type;
-  question = question.replace(/[\—|\-|（|）|\s)]*/, "");
+  /*
+  [\u4E00-\u9FA5]+  多个中文
+  */
+
+  let question_keyword;
+  question = question.match(/[\w|\u4E00-\u9FA5]+/g).join(" ");
+  if (!/\w*/.test(question)) {
+    let question_word_count = 0;
+    question.map((item) => {
+      if (item.length > question_word_count) {
+        question_word_count = item.length;
+        question_keyword = item;
+      }
+    });
+  }else{
+    question_keyword=question
+  }
   // 搜索答题接口
-  let { code: code,message:message,result: result } = await fetch(
+  let {
+    code: code,
+    message: message,
+    result: result,
+  } = await fetch(
     // `http://127.0.0.1:6007/v1/GetAnswer?name=${question}&type=${type}`
-    `https://gkrj.37it.cn/v1/GetAnswer?name=${question}`
+    "https://gkrj.37it.cn/v1/GetAnswer?name=" + question_keyword
   ).then((res) => res.json());
   if (code === 200 && result?.length > 0) {
     let answer = result?.[0]?.Answer.trim();
@@ -26,7 +46,7 @@ $.each(question_content, async function (i, item) {
         let s_body = $(item).find(".subject-body>ol>li");
         $.each(s_body, (i, li) => {
           let txt = $(li).find(".option-content>span").text();
-          if (txt === answer) {
+          if (txt.trim() === answer.trim()) {
             $(li).find("input").click();
           }
         });
@@ -34,7 +54,17 @@ $.each(question_content, async function (i, item) {
         break;
       // 多选
       case "multiple":
-        // answer?.result[0].Answer;
+        let m_question_score = $(item)
+          .find(".summary-sub-title span[ng-bind='subject.getPoint()']")
+          .text();
+        let m_body = $(item).find(".subject-body>ol>li");
+        $.each(m_body, (i, li) => {
+          let txt = $(li).find(".option-content>span").text();
+          if (answer.includes(txt.trim())) {
+            $(li).find("input").click();
+          }
+        });
+        score += parseInt(m_question_score);
         break;
       // 判断
       case "true_or_false":
@@ -44,7 +74,7 @@ $.each(question_content, async function (i, item) {
         let t_body = $(item).find(".subject-body>ol>li");
         $.each(t_body, (i, li) => {
           let txt = $(li).find(".option-content>span").text();
-          if (txt === answer) {
+          if (txt.trim() === answer.trim()) {
             $(li).find("input").click();
           }
         });
@@ -52,7 +82,7 @@ $.each(question_content, async function (i, item) {
         score += parseInt(t_question_score);
         // answer?.result[0].Answer;
         break;
-      // 单选
+      // 完形
       case "fill":
         // answer?.result[0].Answer;
         break;
@@ -82,8 +112,10 @@ $.each(question_content, async function (i, item) {
         break;
     }
   } else {
-    let question_index=$(item).find('.summary-title span[ng-bind="getSubjectIndex(subject, $index)"]').text()
+    let question_index = $(item)
+      .find('.summary-title span[ng-bind="getSubjectIndex(subject, $index)"]')
+      .text();
     // 找不到答案
-    console.log(`第${question_index}题\t${message}`);
+    console.log(`第${question_index}题\t${question}\n${message}`);
   }
 });
