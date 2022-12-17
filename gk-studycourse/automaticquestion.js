@@ -1,5 +1,35 @@
+// 在页面中插入<script />标签
+const injectScript = (url) => {
+  const script = document.createElement("script");
+  script.src = url;
+  document.body.appendChild(script);
+};
+injectScript(
+  "https://cdn.bootcdn.net/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"
+);
+
 var question_content = $("ol.subjects-jit-display>li:not(.text)");
 let score = 0;
+// 未答题有答案导航
+let answerQuestion_html = `<div id='answerQuestion' style='
+width: 210px;height:200px;text-align:end;
+position: fixed;top: 80px;left: 5px;
+font-size:24px;font-weight:bold;
+'><div name="title" style="text-align:left;font-size:16px;margin-bottom:10px;border-bottom-style:dashed">未答题有答案导航</div>
+<ul style="height: 550px;overflow-y: auto;"><li hidden></li></ul></div>`;
+// 未答题导航
+let nullQuestion_html = `<div id='nullQuestion' style='
+width: 210px;height:200px;text-align:end;
+position: fixed;top: 80px;right: 5px;
+font-size:24px;font-weight:bold;
+'><div name="title" style="text-align:left;font-size:16px;margin-bottom:10px;border-bottom-style:dashed">未答题导航</div>
+<ul style="height: 550px;overflow-y: auto;"><li hidden></li></ul></div>`;
+// 创建无效题目录导航
+if ($("#nullQuestion").length == 0) {
+  $(".exam-area-content").before(answerQuestion_html);
+  $(".exam-area-content").before(nullQuestion_html);
+}
+scrollToLocation("nullQuestion", "ul>li");
 $.each(question_content, async function (i, item) {
   var question = $(item)
     .find(
@@ -12,9 +42,8 @@ $.each(question_content, async function (i, item) {
   /*
   [\u4E00-\u9FA5]+  多个中文
   */
-
   let question_keyword;
-  question = question.match(/[\w|\u4E00-\u9FA5]+/g).join(" ");
+  question = question.match(/[(a-zA-Z)||\u4E00-\u9FA5]+/g)?.join("-");
   if (!/\w*/.test(question)) {
     let question_word_count = 0;
     question.map((item) => {
@@ -23,99 +52,136 @@ $.each(question_content, async function (i, item) {
         question_keyword = item;
       }
     });
-  }else{
-    question_keyword=question
-  }
-  // 搜索答题接口
-  let {
-    code: code,
-    message: message,
-    result: result,
-  } = await fetch(
-    // `http://127.0.0.1:6007/v1/GetAnswer?name=${question}&type=${type}`
-    "https://gkrj.37it.cn/v1/GetAnswer?name=" + question_keyword
-  ).then((res) => res.json());
-  if (code === 200 && result?.length > 0) {
-    let answer = result?.[0]?.Answer.trim();
-    switch (type) {
-      // 单选
-      case "single":
-        let s_question_score = $(item)
-          .find(".summary-sub-title span[ng-bind='subject.getPoint()']")
-          .text();
-        let s_body = $(item).find(".subject-body>ol>li");
-        $.each(s_body, (i, li) => {
-          let txt = $(li).find(".option-content>span").text();
-          if (txt.trim() === answer.trim()) {
-            $(li).find("input").click();
-          }
-        });
-        score += parseInt(s_question_score);
-        break;
-      // 多选
-      case "multiple":
-        let m_question_score = $(item)
-          .find(".summary-sub-title span[ng-bind='subject.getPoint()']")
-          .text();
-        let m_body = $(item).find(".subject-body>ol>li");
-        $.each(m_body, (i, li) => {
-          let txt = $(li).find(".option-content>span").text();
-          if (answer.includes(txt.trim())) {
-            $(li).find("input").click();
-          }
-        });
-        score += parseInt(m_question_score);
-        break;
-      // 判断
-      case "true_or_false":
-        let t_question_score = $(item)
-          .find(".summary-sub-title span[ng-bind='subject.getPoint()']")
-          .text();
-        let t_body = $(item).find(".subject-body>ol>li");
-        $.each(t_body, (i, li) => {
-          let txt = $(li).find(".option-content>span").text();
-          if (txt.trim() === answer.trim()) {
-            $(li).find("input").click();
-          }
-        });
-        score += t_question_score;
-        score += parseInt(t_question_score);
-        // answer?.result[0].Answer;
-        break;
-      // 完形
-      case "fill":
-        // answer?.result[0].Answer;
-        break;
-      // 简答
-      case "short":
-        // answer?.result[0].Answer;
-        break;
-      // 文本
-      case "text":
-        // answer?.result[0].Answer;
-        break;
-      // 综合
-      case "analysis":
-        // answer?.result[0].Answer;
-        break;
-      // 匹配
-      case "match":
-        // answer?.result[0].Answer;
-        break;
-      // 随机
-      case "random":
-        // answer?.result[0].Answer;
-        break;
-      // 完形填空
-      case "cloze":
-        // answer?.result[0].Answer;
-        break;
-    }
   } else {
-    let question_index = $(item)
-      .find('.summary-title span[ng-bind="getSubjectIndex(subject, $index)"]')
-      .text();
-    // 找不到答案
-    console.log(`第${question_index}题\t${question}\n${message}`);
+    question_keyword = question;
   }
+  let question_index = $(item)
+    .find('.summary-title span[ng-bind="getSubjectIndex(subject, $index)"]')
+    .text();
+  let nullArr = [];
+  let answer = "";
+  // 搜索答题接口
+  await fetch(
+    `http://127.0.0.1:6007/v1/GetAnswer?name=${question_keyword}`
+  )
+    .then((res) => res.json())
+    .then(({ code, result, message }) => {
+      if (code === 200 && result?.length > 0) {
+        // 答案拼接
+        result.map((item) => {
+          answer = answer.concat("-", item.Answer.trim());
+        });
+        switch (type) {
+          // 单选
+          case "single":
+            answerQuestion(item, answer, score, question_index, nullQuestion);
+            break;
+          // 多选
+          case "multiple":
+            answerQuestion(item, answer, score, question_index, nullQuestion);
+            break;
+          // 判断
+          case "true_or_false":
+            answerQuestion(item, answer, score, question_index, nullQuestion);
+            // answer?.result[0].Answer;
+            break;
+          // 完形
+          case "fill":
+            // answer?.result[0].Answer;
+            break;
+          // 简答
+          case "short":
+            // answer?.result[0].Answer;
+            break;
+          // 文本
+          case "text":
+            // answer?.result[0].Answer;
+            break;
+          // 综合
+          case "analysis":
+            // answer?.result[0].Answer;
+            break;
+          // 匹配
+          case "match":
+            // answer?.result[0].Answer;
+            break;
+          // 随机
+          case "random":
+            // answer?.result[0].Answer;
+            break;
+          // 完形填空
+          case "cloze":
+            // answer?.result[0].Answer;
+            break;
+        }
+      } else {
+        $.each($("#nullQuestion>ul>li"), (i, item) => {
+          nullArr.push($(item).text());
+        });
+        if (!nullArr.includes(`第${question_index}题`)) {
+          $(item)
+            .find(".summary-title")
+            .attr("id", "answer" + question_index);
+          $("#nullQuestion>ul").append(
+            `<li onclick="document.querySelector('${
+              "#answer" + question_index
+            }').scrollIntoView({behavior: 'smooth',block: 'center',inline: 'nearest',});">第${question_index}题</a></li>`
+          );
+        }
+      }
+    });
 });
+// 通用答题方法
+function answerQuestion(item, answer, score, question_index, nullQuestion) {
+  let isChecked = false;
+  let question_score = $(item)
+    .find(".summary-sub-title span[ng-bind='subject.getPoint()']")
+    .text();
+  let s_body = $(item).find(".subject-body>ol>li");
+  $.each(s_body, (i, li) => {
+    let txt = $(li).find(".option-content>span").text();
+    if (answer.includes(txt.trim())) {
+      let input = $(li).find("input");
+      $(input).prop("checked") === true ? "" : $(input).click();
+      isChecked = true;
+    }
+  });
+  let li = `<li onclick="document.querySelector('${
+    "#answer" + question_index
+  }').scrollIntoView({behavior: 'smooth',block: 'center',inline: 'nearest',});">第${question_index}题</a></li>`;
+
+  let answerArr = [];
+  $.each($("#nullQuestion>ul>li"), (item, i) => {
+    answerArr.push($(item).text());
+  });
+  if ($(item).find("[name='ink-Answer'").length == 0 && isChecked === false) {
+    $(item)
+      .find(".summary-title")
+      .append(
+        `<span id=${
+          "answer" + question_index
+        } name="ink-Answer" style="font-weight:bolder;color:red;width:300px">推荐答案：${answer
+          .replace("-", "")
+          .trim()}</span>`
+      );
+    if (!answerArr.includes(`第${question_index}题`)) {
+      $("#answerQuestion>ul").append(li);
+    }
+  }
+  score += parseInt(question_score);
+}
+// 滑动定位
+function scrollToLocation(element, chilren) {
+  var mainContainer = $(`${"#" + element}`),
+    scrollToContainer = mainContainer.find(`${chilren + ":last"}`);
+  //动画效果
+  mainContainer.animate(
+    {
+      scrollTop:
+        scrollToContainer.offset().top -
+        mainContainer.offset().top +
+        mainContainer.scrollTop(),
+    },
+    2000
+  );
+}
