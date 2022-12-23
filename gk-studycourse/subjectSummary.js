@@ -1,15 +1,4 @@
-// 在页面中插入<script />标签
-const injectScript = (url) => {
-  const script = document.createElement("script");
-  script.src = url;
-  document.body.appendChild(script);
-};
-injectScript(
-  "https://cdn.bootcdn.net/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"
-);
-const myfetch = (url, header, flag) => {
-  return fetch(url, header).then((res) => res.json());
-};
+
 Date.prototype.format = function (format) {
   var o = {
     "M+": this.getMonth() + 1, //month
@@ -33,9 +22,8 @@ Date.prototype.format = function (format) {
       );
   return format;
 };
-let alldata = [];
+let courseArr = [];
 let myCourse = {},
-  flag = false,
   header = {
     headers: {
       accept: "application/json, text/plain, */*",
@@ -64,22 +52,38 @@ let { total: total } = await fetch(
   header
 ).then((res) => res.json());
 console.log("总数：", total);
-// 获取所有课程
-let { courses: courses } = await fetch(
-  `https://lms.ouchn.cn/api/my-courses?conditions=%7B%22status%22:%5B%22ongoing%22%5D,%22keyword%22:%22%22%7D&fields=id,name,course_code,department(id,name),grade(id,name),klass(id,name),course_type,cover,small_cover,start_date,end_date,is_started,is_closed,academic_year_id,semester_id,credit,compulsory,second_name,display_name,created_user(id,name),org(is_enterprise_or_organization),org_id,public_scope,course_attributes(teaching_class_name,copy_status,tip,data),audit_status,audit_remark,can_withdraw_course,imported_from,allow_clone,is_instructor,is_team_teaching,academic_year(id,name),semester(id,name),instructors(id,name,email,avatar_small_url),is_master,is_child,has_synchronized,master_course(name)
-  &page=1&page_size=400`,
-  header
-).then((res) => res.json());
-// 获取所有课程
-let { courses: course } = await fetch(
-  `https://lms.ouchn.cn/api/my-courses?conditions=%7B%22status%22:%5B%22ongoing%22%5D,%22keyword%22:%22%22%7D&fields=id,name,course_code,department(id,name),grade(id,name),klass(id,name),course_type,cover,small_cover,start_date,end_date,is_started,is_closed,academic_year_id,semester_id,credit,compulsory,second_name,display_name,created_user(id,name),org(is_enterprise_or_organization),org_id,public_scope,course_attributes(teaching_class_name,copy_status,tip,data),audit_status,audit_remark,can_withdraw_course,imported_from,allow_clone,is_instructor,is_team_teaching,academic_year(id,name),semester(id,name),instructors(id,name,email,avatar_small_url),is_master,is_child,has_synchronized,master_course(name)
-  &page=2&page_size=360`,
-  header
-).then((res) => res.json());
-courses = courses.concat(course);
-console.log("课程总计：", courses.length);
-if (courses ?? "" !== "") {
-  for (const course of courses) {
+let page = 100;
+if (Math.floor(total / page) > 1) {
+  for (let i = 0; i <= Math.floor(total / page); i++) {
+    await ((i) => {
+      return new Promise((resolve, reject) => {
+        fetch(
+          `https://lms.ouchn.cn/api/my-courses?conditions=%7B%22status%22:%5B%22ongoing%22%5D,%22keyword%22:%22%22%7D&fields=id,name,course_code,department(id,name),grade(id,name),klass(id,name),course_type,cover,small_cover,start_date,end_date,is_started,is_closed,academic_year_id,semester_id,credit,compulsory,second_name,display_name,created_user(id,name),org(is_enterprise_or_organization),org_id,public_scope,course_attributes(teaching_class_name,copy_status,tip,data),audit_status,audit_remark,can_withdraw_course,imported_from,allow_clone,is_instructor,is_team_teaching,academic_year(id,name),semester(id,name),instructors(id,name,email,avatar_small_url),is_master,is_child,has_synchronized,master_course(name)&
+      page=${i}&page_size=100`,
+          header
+        )
+          .then((res) => res.json())
+          .then(({ courses: courses }) => {
+            courseArr = courseArr.concat(courses);
+            resolve();
+          });
+      });
+    })(i);
+  }
+} else {
+  fetch(
+    `https://lms.ouchn.cn/api/my-courses?conditions=%7B%22status%22:%5B%22ongoing%22%5D,%22keyword%22:%22%22%7D&fields=id,name,course_code,department(id,name),grade(id,name),klass(id,name),course_type,cover,small_cover,start_date,end_date,is_started,is_closed,academic_year_id,semester_id,credit,compulsory,second_name,display_name,created_user(id,name),org(is_enterprise_or_organization),org_id,public_scope,course_attributes(teaching_class_name,copy_status,tip,data),audit_status,audit_remark,can_withdraw_course,imported_from,allow_clone,is_instructor,is_team_teaching,academic_year(id,name),semester(id,name),instructors(id,name,email,avatar_small_url),is_master,is_child,has_synchronized,master_course(name)&
+      page=1&page_size=${page}`,
+    header
+  )
+    .then((res) => res.json())
+    .then(({ courses: courses }) => {
+      courseArr = courseArr.concat(courses);
+    });
+}
+console.log("课程总计：", courseArr.length);
+if (courseArr ?? "" !== "") {
+  for (const course of courseArr) {
     await ((course) => {
       return new Promise((resolve, reject) => {
         setTimeout(async () => {
@@ -102,20 +106,37 @@ if (courses ?? "" !== "") {
                   answer = generateAnswer(item.options);
                 }
                 summary = {
-                  id: item.id,
-                  name:
+                  Id: item.id,
+                  Name:
                     delHtmlTag(item.description) === ""
                       ? item.description
-                      : delHtmlTag(item.description),
-                  answer: answer ?? "" === "" ? delHtmlTag(answer) : "",
-                  point: item.point,
-                  type_: item.type,
-                  updated_at: new Date().format("yyyy-MM-dd hh:mm:ss"),
-                  level: item.difficulty_level,
-                  course: course.display_name,
-                  source: globalData.user.name + "/" + globalData.user.mobile,
+                          ?.match(/[(a-zA-Z)|(0-9)|\u4E00-\u9FA5]+/g)
+                          ?.join("")
+                      : delHtmlTag(item.description)
+                          ?.match(/[(a-zA-Z)|(0-9)|\u4E00-\u9FA5]+/g)
+                          ?.join(""),
+                  Answer:
+                    answer ?? "" === ""
+                      ? delHtmlTag(answer)
+                          ?.match(/[(a-zA-Z)|(0-9)|\u4E00-\u9FA5]+/g)
+                          ?.join("")
+                      : "",
+                  Point: item.point,
+                  Type_: item.type,
+                  Updated_at: new Date().format("yyyy-MM-dd hh:mm:ss"),
+                  Level: item.difficulty_level,
+                  Course: course.display_name,
+                  Source: globalData.user.name + "/" + globalData.user.mobile,
                 };
-                alldata.push(summary);
+                let { message: msg } = await fetch(
+                  `https://gkrj.37it.cn/v1/subjectSummary`,
+                  {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(summary),
+                  }
+                ).then(res=>res.json())
+                console.log(msg);
               });
               /*
         论述题/简答题 以下type没有答案
@@ -151,6 +172,3 @@ function generateAnswer(arr) {
   });
   return tmp;
 }
-
-// 等待alldata数据写完，手动执行下面
-// saveAs(new Blob([JSON.stringify(alldata)], { type: "" }), "数据.json");
