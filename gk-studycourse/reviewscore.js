@@ -2,7 +2,7 @@
 // @name         自动评阅
 // @namespace    https://ink-kai.github.io/
 // @license      MIT
-// @version      1.0
+// @version      1.1
 // @description  自动评阅
 // @author       Ink
 // @match        https://lms.ouchn.cn/*
@@ -51,12 +51,19 @@
           let total_score = $(".score-list .score-area.ng-binding").text();
           let not = $("span[ng-bind='submissionHasMarkedCount']").text();
           let count = $("span[ng-bind='allSubmissionCount']").text();
-          if (parseInt(total_score) !== 100) {
+          let page_totalScore = $(`span.actual-score.ng-scope>span`)
+            .text()
+            .split("分")
+            .reduce(getCountScore);
+          if (parseFloat(page_totalScore) !== parseFloat(total_score)) {
             await commentScore();
-          } else if (parseInt(not) === parseInt(count)) {
+          } else if (parseFloat(not) === parseFloat(count)) {
             showMsg("评阅完成", "info", "top", 3000);
             clearInterval(comment);
-          } else {
+          } else if (
+            parseFloat(page_totalScore) === parseFloat(total_score) ||
+            parseFloat(total_score) === 100
+          ) {
             showMsg("进行下一个评阅", "info", "top", 3000);
             $(
               ".submission.left.examinee-list .icon-student-right-narrow"
@@ -69,12 +76,19 @@
         let total_score = $(".score-list .score-area.ng-binding").text();
         let not = $("span[ng-bind='submissionHasMarkedCount']").text();
         let count = $("span[ng-bind='allSubmissionCount']").text();
-        if (parseInt(total_score) !== 100) {
+        let page_totalScore = $(`span.actual-score.ng-scope>span`)
+          .text()
+          .split("分")
+          .reduce(getCountScore);
+        if (parseFloat(page_totalScore) !== parseFloat(total_score)) {
           await commentScore();
-        } else if (parseInt(not) === parseInt(count)) {
+        } else if (parseFloat(not) === parseFloat(count)) {
           showMsg("评阅完成", "info", "top", 3000);
           clearInterval(comment);
-        } else {
+        } else if (
+          parseFloat(page_totalScore) === parseFloat(total_score) ||
+          parseFloat(total_score) === 100
+        ) {
           showMsg("进行下一个评阅", "info", "top", 1000);
           $(
             ".submission.left.examinee-list .icon-student-right-narrow"
@@ -106,7 +120,12 @@
     }
   };
 })();
-
+function getCountScore(previous, current, index, array) {
+  if (current.length == 0) {
+    current = 0;
+  }
+  return parseFloat(previous) + parseFloat(current);
+}
 async function commentScore() {
   let question_body = $(".paper-content.card.ng-scope");
   let arr = Array.from($(question_body).find("ol>li[id*='subject']"));
@@ -115,6 +134,10 @@ async function commentScore() {
     let score = $(item)
       .find(".subject-point> span:nth-child(2)>span:first")
       .text();
+    let notExpre = $(item)
+      .find("div.summary-title span.answer-message.tc-tag.error.ng-scope")
+      .text()
+      .includes("未答");
     let score_input = $(item).find(
       ".subject-score.ng-scope input[name='score']"
     );
