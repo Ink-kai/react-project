@@ -16,7 +16,7 @@ window.onload = function () {
     gk.ResolvePaste();
   } else if (/exam\/\d+/.test(href)) {
     /* 自动答题 */
-    // gk.ResolvePaste()
+    gk.AutomaticQusetion()
   } else if (/learning-activity\/full-screen\#/.test(href)) {
     /* 教师评分 */
     // gk.ResolvePaste()

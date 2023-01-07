@@ -1,13 +1,3 @@
-// 在页面中插入<script />标签
-const injectScript = (url) => {
-  const script = document.createElement("script");
-  script.src = url;
-  document.body.appendChild(script);
-};
-injectScript(
-  "https://cdn.bootcdn.net/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"
-);
-
 var question_content = $("ol.subjects-jit-display>li:not(.text)");
 let score = 0;
 // 未答题有答案导航
@@ -15,14 +5,14 @@ let answerQuestion_html = `<div id='answerQuestion' style='
 width: 210px;height:200px;text-align:end;
 position: fixed;top: 80px;left: 5px;
 font-size:24px;font-weight:bold;
-'><div name="title" style="text-align:left;font-size:16px;margin-bottom:10px;border-bottom-style:dashed">未答题有答案导航</div>
+'><div name="title" style="text-align:left;font-size:16px;margin-bottom:10px;border-bottom-style:dashed">未答题有答案导航(可跳转)</div>
 <ul style="height: 550px;overflow-y: auto;"><li hidden></li></ul></div>`;
 // 未答题导航
 let nullQuestion_html = `<div id='nullQuestion' style='
 width: 210px;height:200px;text-align:end;
 position: fixed;top: 80px;right: 5px;
 font-size:24px;font-weight:bold;
-'><div name="title" style="text-align:left;font-size:16px;margin-bottom:10px;border-bottom-style:dashed">未答题导航</div>
+'><div name="title" style="text-align:left;font-size:16px;margin-bottom:10px;border-bottom-style:dashed">未答题无答案导航(可跳转)</div>
 <ul style="height: 550px;overflow-y: auto;"><li hidden></li></ul></div>`;
 // 创建无效题目录导航
 if ($("#nullQuestion").length == 0) {
@@ -43,7 +33,7 @@ $.each(question_content, async function (i, item) {
   [\u4E00-\u9FA5]+  多个中文
   */
   let question_keyword;
-  question = question.match(/[(a-zA-Z)||\u4E00-\u9FA5]+/g)?.join("-");
+  question = question.match(/[(a-zA-Z)|\u4E00-\u9FA5]+/g)?.join("-");
   if (!/\w*/.test(question)) {
     let question_word_count = 0;
     question.map((item) => {
@@ -61,15 +51,13 @@ $.each(question_content, async function (i, item) {
   let nullArr = [];
   let answer = "";
   // 搜索答题接口
-  await fetch(
-    `http://127.0.0.1:6007/v1/GetAnswer?name=${question_keyword}`
-  )
+  await fetch(`https://gkrj.37it.cn/v1/GetAnswer?name=${question_keyword}`)
     .then((res) => res.json())
     .then(({ code, result, message }) => {
       if (code === 200 && result?.length > 0) {
         // 答案拼接
         result.map((item) => {
-          answer = answer.concat("-", item.Answer.trim());
+          answer = answer.concat(" ", item.Answer.trim());
         });
         switch (type) {
           // 单选
@@ -131,6 +119,33 @@ $.each(question_content, async function (i, item) {
       }
     });
 });
+customFetch(
+  `https://lms.ouchn.cn/api/exams/${
+    /(\d+)/.exec(window.location.href)[1]
+  }/left_time`,
+  {
+    headers: {
+      accept: "application/json, text/plain, */*",
+      "accept-language": "zh-CN,zh;q=0.9,en;q=0.8",
+      "sec-ch-ua":
+        '"Not?A_Brand";v="8", "Chromium";v="108", "Google Chrome";v="108"',
+      "sec-ch-ua-mobile": "?0",
+      "sec-ch-ua-platform": '"Windows"',
+      "sec-fetch-dest": "empty",
+      "sec-fetch-mode": "cors",
+      "sec-fetch-site": "same-origin",
+    },
+    referrer: "https://lms.ouchn.cn/exam/20000067558/subjects",
+    referrerPolicy: "strict-origin-when-cross-origin",
+    body: null,
+    method: "GET",
+    mode: "cors",
+    credentials: "include",
+  }
+);
+function customFetch(url, header) {
+  return fetch(url, header);
+}
 // 通用答题方法
 function answerQuestion(item, answer, score, question_index, nullQuestion) {
   let isChecked = false;
@@ -160,9 +175,7 @@ function answerQuestion(item, answer, score, question_index, nullQuestion) {
       .append(
         `<span id=${
           "answer" + question_index
-        } name="ink-Answer" style="font-weight:bolder;color:red;width:300px">推荐答案：${answer
-          .replace("-", "")
-          .trim()}</span>`
+        } name="ink-Answer" style="font-weight:bolder;color:red;width:300px">推荐答案：${answer.trim()}</span>`
       );
     if (!answerArr.includes(`第${question_index}题`)) {
       $("#answerQuestion>ul").append(li);

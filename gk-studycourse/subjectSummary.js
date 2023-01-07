@@ -122,7 +122,7 @@ if (courseArr ?? "" !== "") {
                           ?.join("")
                       : "",
                   Point: item.point,
-                  Type_: item.type,
+                  Type: item.type,
                   Updated_at: new Date().format("yyyy-MM-dd hh:mm:ss"),
                   Level: item.difficulty_level,
                   Course: course.display_name,
@@ -130,6 +130,7 @@ if (courseArr ?? "" !== "") {
                 };
                 let { message: msg } = await fetch(
                   `https://gkrj.37it.cn/v1/subjectSummary`,
+                  // `http://127.0.0.1:6007/v1/subjectSummary`,
                   {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
